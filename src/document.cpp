@@ -977,3 +977,25 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 		child->init();
 	}
 }
+
+void litehtml::document::init_element(element::ptr element) {
+	// apply master CSS
+	element->apply_stylesheet(m_context->master_css());
+
+    // parse elements attributes
+    element->parse_attributes();
+
+    // Apply parsed styles.
+    element->apply_stylesheet(m_styles);
+
+    // Parse applied styles in the elements
+    element->parse_styles();
+
+    // Now the m_tabular_elements is filled with tabular elements.
+    // We have to check the tabular elements for missing table elements
+    // and create the anonymous boxes in visual table layout
+    fix_tables_layout();
+
+    // Fanaly initialize elements
+    element->init();
+}
