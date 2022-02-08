@@ -95,152 +95,153 @@ namespace litehtml
         void init_element(element::ptr element);
 
         template <typename HtmlTag>
-                static litehtml::elements_vector create_child(HtmlTag htmltag, litehtml::document::ptr doc) {
-                  litehtml::string_map attrs;
+        static litehtml::elements_vector create_child(HtmlTag htmltag, litehtml::document::ptr doc) {
+            litehtml::string_map attrs;
 
-                  int tagsize = htmltag.name.length();
-                  litehtml::tchar_t* tag = new char[tagsize];  // do not forget delete it!
-                  strcpy(tag, htmltag.name.c_str());
+            int tagsize = htmltag.name.length();
+            litehtml::tchar_t* tag = new char[tagsize];  // do not forget delete it!
+            strcpy(tag, htmltag.name.c_str());
 
-                  if (!htmltag.properties.empty()) {
-                    for (auto prop : htmltag.properties) {
-                      attrs[prop.name] = prop.value;
+            if (!htmltag.properties.empty()) {
+                for (auto prop : htmltag.properties) {
+                    attrs[prop.name] = prop.value;
                     }
-                  }
+            }
 
-                  litehtml::elements_vector elements;
-                  litehtml::element::ptr ret;
-                  mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
+            litehtml::elements_vector elements;
+            litehtml::element::ptr ret;
+            mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
 
-                  ret = doc->create_element(tag, attrs);
-                  if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
-                    for (auto tags : htmltag.tags.tags()) {
-                      auto children = litehtml::document::create_child(tags, doc);
-                      for (auto child : children) {
+            ret = doc->create_element(tag, attrs);
+            if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+                for (auto tags : htmltag.tags.tags()) {
+                    auto children = litehtml::document::create_child(tags, doc);
+                    for (auto child : children) {
                         ret->appendChild(child);
-                      }
                     }
-                  } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
-                    std::string t = htmltag.tags.str();
-                    int sizetext = t.length();
-                    litehtml::tchar_t* text = new char[sizetext];
-                    strcpy(text, t.c_str());
-                    //ret = std::make_shared<litehtml::el_text>(text, doc);
-                    doc->m_container->split_text(
-                        text, [doc, &elements](const tchar_t* text) { elements.push_back(std::make_shared<el_text>(text, doc)); 
-                        }, 
-                        [doc, &elements](const tchar_t* text) { elements.push_back(std::make_shared<el_space>(text, doc)); 
-                        });
-
-                    for (auto child : elements) {
-                      if (child != nullptr) {
-                        ret->appendChild(child);
-                      }
-                    }
-                  } 
-
-                  elements.clear();
-                  elements.push_back(ret);
-                  return elements;
                 }
+            } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
+                std::string t = htmltag.tags.str();
+                int sizetext = t.length();
+                litehtml::tchar_t* text = new char[sizetext];
+                strcpy(text, t.c_str());
+                doc->m_container->split_text(
+                    text, [doc, &elements](const tchar_t* text) {
+                        elements.push_back(std::make_shared<el_text>(text, doc)); 
+                    }, 
+                    [doc, &elements](const tchar_t* text) { 
+                        elements.push_back(std::make_shared<el_space>(text, doc)); 
+                    });
+
+                for (auto child : elements) {
+                    if (child != nullptr) {
+                        ret->appendChild(child);
+                    }
+                }
+            } 
+
+            elements.clear();
+            elements.push_back(ret);
+            return elements;
+        }
 
 		template <typename HtmlTag>
-                static litehtml::document::ptr createFromHtmltag(HtmlTag htmltag, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles) {
-                  // Create litehtml::document
-                  litehtml::document::ptr doc = std::make_shared<litehtml::document>(objPainter, ctx);
+        static litehtml::document::ptr createFromHtmltag(HtmlTag htmltag, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles) {
+            // Create litehtml::document
+            litehtml::document::ptr doc = std::make_shared<litehtml::document>(objPainter, ctx);
 
-                  // Create litehtml::elements.
-                  litehtml::elements_vector root_elements;
+            // Create litehtml::elements.
+            litehtml::elements_vector root_elements;
 
-                  litehtml::string_map attrs;
-                  int tagsize = htmltag.name.length();
-                  litehtml::tchar_t* tag = new char[tagsize];  
-                  strcpy(tag, htmltag.name.c_str());
+            litehtml::string_map attrs;
+            int tagsize = htmltag.name.length();
+            litehtml::tchar_t* tag = new char[tagsize];  
+            strcpy(tag, htmltag.name.c_str());
 
-                  if (!htmltag.properties.empty()) {
-                    for (auto prop : htmltag.properties) {
-                      attrs[prop.name] = prop.value;
-                    }
-                  }
-
-                  mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
-                  if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
-                    litehtml::element::ptr ret;
-
-                    ret = doc->create_element(tag, attrs);
-
-                    if (ret) {
-                      root_elements.push_back(ret);
-                    }
-                    for (auto tags : htmltag.tags.tags()) {
-                      auto children = litehtml::document::create_child(tags, doc);
-                      for (auto child : children) {
-                        ret->appendChild(child);
-                      }
-                    }
-                  } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
-                    std::string t = htmltag.tags.str();
-                    int sizetext = t.length();
-                    litehtml::tchar_t* text = new char[sizetext];
-                    strcpy(text, t.c_str());
-                    root_elements.push_back(std::make_shared<litehtml::el_text>(text, doc));
-                  }
-
-
-                  if (!root_elements.empty()) {
-                    doc->m_root = root_elements.back();
-                  }
-
-                  // Let's process created elements tree
-                  if (doc->m_root) {
-                    doc->container()->get_media_features(doc->m_media);
-
-                    // apply master CSS
-                    doc->m_root->apply_stylesheet(ctx->master_css());
-
-                    // parse elements attributes
-                    doc->m_root->parse_attributes();
-
-                    // parse style sheets linked in document
-                    litehtml::media_query_list::ptr media;
-                    for (const auto& css : doc->m_css) {
-                      if (!css.media.empty()) {
-                        media = litehtml::media_query_list::create_from_string(css.media, doc);
-                      } else {
-                        media = nullptr;
-                      }
-                      doc->m_styles.parse_stylesheet(css.text.c_str(), css.baseurl.c_str(), doc, media);
-                    }
-                    // Sort css selectors using CSS rules.
-                    doc->m_styles.sort_selectors();
-
-                    // get current media features
-                    if (!doc->m_media_lists.empty()) {
-                      doc->update_media_lists(doc->m_media);
-                    }
-
-                    // Apply parsed styles.
-                    doc->m_root->apply_stylesheet(doc->m_styles);
-
-                    // Apply user styles if any
-                    if (user_styles) {
-                      doc->m_root->apply_stylesheet(*user_styles);
-                    }
-
-                    // Parse applied styles in the elements
-                    doc->m_root->parse_styles();
-
-                    // Now the m_tabular_elements is filled with tabular elements.
-                    // We have to check the tabular elements for missing table elements
-                    // and create the anonymous boxes in visual table layout
-                    doc->fix_tables_layout();
-
-                    // Fanaly initialize elements
-                    doc->m_root->init();
-                  }
-
-                  return doc;
+            if (!htmltag.properties.empty()) {
+                for (auto prop : htmltag.properties) {
+                    attrs[prop.name] = prop.value;
                 }
+            }
+
+            mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
+            if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+                litehtml::element::ptr ret;
+
+                ret = doc->create_element(tag, attrs);
+
+                if (ret) {
+                    root_elements.push_back(ret);
+                }
+                for (auto tags : htmltag.tags.tags()) {
+                    auto children = litehtml::document::create_child(tags, doc);
+                    for (auto child : children) {
+                        ret->appendChild(child);
+                    }
+                }
+            } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
+                std::string t = htmltag.tags.str();
+                int sizetext = t.length();
+                litehtml::tchar_t* text = new char[sizetext];
+                strcpy(text, t.c_str());
+                root_elements.push_back(std::make_shared<litehtml::el_text>(text, doc));
+            }
+
+
+             if (!root_elements.empty()) {
+                doc->m_root = root_elements.back();
+             }
+
+            // Let's process created elements tree
+            if (doc->m_root) {
+                doc->container()->get_media_features(doc->m_media);
+
+                // apply master CSS
+                doc->m_root->apply_stylesheet(ctx->master_css());
+
+                // parse elements attributes
+                doc->m_root->parse_attributes();
+
+                // parse style sheets linked in document
+                litehtml::media_query_list::ptr media;
+                for (const auto& css : doc->m_css) {
+                    if (!css.media.empty()) {
+                        media = litehtml::media_query_list::create_from_string(css.media, doc);
+                    } else {
+                        media = nullptr;
+                    }
+                        doc->m_styles.parse_stylesheet(css.text.c_str(), css.baseurl.c_str(), doc, media);
+                }
+                // Sort css selectors using CSS rules.
+                doc->m_styles.sort_selectors();
+
+                // get current media features
+                if (!doc->m_media_lists.empty()) {
+                    doc->update_media_lists(doc->m_media);
+                }
+
+                // Apply parsed styles.
+                doc->m_root->apply_stylesheet(doc->m_styles);
+
+                // Apply user styles if any
+                if (user_styles) {
+                    doc->m_root->apply_stylesheet(*user_styles);
+                }
+
+                // Parse applied styles in the elements
+                doc->m_root->parse_styles();
+
+                // Now the m_tabular_elements is filled with tabular elements.
+                // We have to check the tabular elements for missing table elements
+                // and create the anonymous boxes in visual table layout
+                doc->fix_tables_layout();
+
+                // Fanaly initialize elements
+                doc->m_root->init();
+            }
+
+            return doc;
+        }
 
 	private:
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);

@@ -198,44 +198,70 @@ namespace litehtml
 		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
 		virtual void				add_style(const litehtml::style& st);
 		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
+		
 		template<typename HtmlTag>
-                void update_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
-				{
-                  auto element = this->get_element_by_point(x, y, client_x, client_y);
-                  for (auto i = 0; i < m_children.size(); i++) {
-                    element::ptr el = m_children[i];
-                    if (el == element) {
-                      m_children.erase(m_children.begin() + i);
-                      litehtml::string_map attrs;
-                      if (!elem.properties.empty()) {
-                        for (auto prop : elem.properties) {
-                          attrs[prop.name] = prop.value;
+		void update_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
+		{
+			auto element = this->get_element_by_point(x, y, client_x, client_y);
+            for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+				if (el == element) {
+					m_children.erase(m_children.begin() + i);
+					litehtml::string_map attrs;
+					if (!elem.properties.empty()) {
+						for (auto prop : elem.properties) {
+							attrs[prop.name] = prop.value;
                         }
-                      }
-                      int tagsize = elem.name.length();
-                      litehtml::tchar_t* tag = new char[tagsize];  // do not forget delete it!
-                      strcpy(tag, elem.name.c_str());
-                      element::ptr elem_ptr = get_document()->create_element(tag, attrs);
-                      get_document()->init_element(elem_ptr);
-					  m_children.insert(m_children.begin() + i, elem_ptr);
-
-                      break;
+					}
+					int tagsize = elem.name.length();
+                    if (tagsize > 0) {
+                    	litehtml::tchar_t* tag = new char[tagsize];  // do not forget delete it!
+						strcpy(tag, elem.name.c_str());
+						element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+						get_document()->init_element(elem_ptr);
+						m_children.insert(m_children.begin() + i, elem_ptr);
+                      
+						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						    for (auto tags : elem.tags.tags()) {
+								auto children = litehtml::document::create_child(tags, get_document());
+								for (auto child : children) {
+									elem_ptr->appendChild(child);
+									get_document()->init_element(child);
+								}
+							}
+						}
+                    } else {
+						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						    for (auto tags : elem.tags.tags()) {
+								auto children = litehtml::document::create_child(tags, get_document());
+								for (auto child : children) {
+                                    get_document()->init_element(child);
+                                    m_children.insert(m_children.begin() + i, child);
+									++i;
+								}
+							}
+						}
                     }
-                    el->update_element_by_point(x, y, client_x, client_y, elem);
-                  }
-                };
+					
+					break;
+                }
+                el->update_element_by_point(x, y, client_x, client_y, elem);
+            }
+        };
 
 		void remove_element_by_point(int x, int y, int client_x, int client_y) {
-                  auto element = this->get_element_by_point(x, y, client_x, client_y);
-                  for (auto i = 0; i < m_children.size(); i++) {
-                    element::ptr el = m_children[i];
-                    if (el == element) {
-                      m_children.erase(m_children.begin() + i);
-                      break;
-                    }
-                    el->remove_element_by_point(x, y, client_x, client_y);
-                  }
-                };
+			auto element = this->get_element_by_point(x, y, client_x, client_y);
+			for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+                if (el == element) {
+					m_children.erase(m_children.begin() + i);
+					break;
+                }
+                el->remove_element_by_point(x, y, client_x, client_y);
+            }
+        };
 
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
