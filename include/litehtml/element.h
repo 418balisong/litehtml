@@ -225,6 +225,18 @@ namespace litehtml
                   }
                 };
 
+		void remove_element_by_point(int x, int y, int client_x, int client_y) {
+                  auto element = this->get_element_by_point(x, y, client_x, client_y);
+                  for (auto i = 0; i < m_children.size(); i++) {
+                    element::ptr el = m_children[i];
+                    if (el == element) {
+                      m_children.erase(m_children.begin() + i);
+                      break;
+                    }
+                    el->remove_element_by_point(x, y, client_x, client_y);
+                  }
+                };
+
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
 	};
