@@ -205,6 +205,7 @@ namespace litehtml
 			auto element = this->get_element_by_point(x, y, client_x, client_y);
             for (auto i = 0; i < m_children.size(); i++) {
 				element::ptr el = m_children[i];
+                element::ptr parent = el->parent();
 				if (el == element) {
 					m_children.erase(m_children.begin() + i);
 					litehtml::string_map attrs;
@@ -215,7 +216,7 @@ namespace litehtml
 					}
 					int tagsize = elem.name.length();
                     if (tagsize > 0) {
-                    	litehtml::tchar_t* tag = new char[tagsize];  // do not forget delete it!
+                    	litehtml::tchar_t* tag = new char[tagsize];  
 						strcpy(tag, elem.name.c_str());
 						element::ptr elem_ptr = get_document()->create_element(tag, attrs);
 						get_document()->init_element(elem_ptr);
@@ -229,6 +230,12 @@ namespace litehtml
 									elem_ptr->appendChild(child);
 									get_document()->init_element(child);
 								}
+							}
+						} else if (var == mtest::structures::HtmlTextOrTags::Variants::text){
+                            auto children = litehtml::document::create_child(elem, get_document());
+							for (auto child : children) {
+                                parent->appendChild(child);
+								get_document()->init_element(child);
 							}
 						}
                     } else {
