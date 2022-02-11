@@ -219,8 +219,70 @@ namespace litehtml
                     	litehtml::tchar_t* tag = new char[tagsize];  
 						strcpy(tag, elem.name.c_str());
 						element::ptr elem_ptr = get_document()->create_element(tag, attrs);
-						get_document()->init_element(elem_ptr);
+                        elem_ptr->m_parent = parent;
 						m_children.insert(m_children.begin() + i, elem_ptr);
+                        get_document()->init_element(elem_ptr);
+
+						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						    for (auto tags : elem.tags.tags()) {
+								auto children = litehtml::document::create_child(tags, get_document());
+								for (auto child : children) {
+									elem_ptr->appendChild(child);
+									get_document()->init_element(child);
+								}
+							}
+						} else if (var == mtest::structures::HtmlTextOrTags::Variants::text){
+                            auto children = litehtml::document::create_child(elem, get_document());
+							for (auto child : children) {
+                                parent->appendChild(child);
+								get_document()->init_element(child);
+							}
+						}
+                    } else { 	// if new elem is empty tag - insert all child tags in place of current
+						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						    for (auto tags : elem.tags.tags()) {
+								auto children = litehtml::document::create_child(tags, get_document());
+								for (auto child : children) {
+                                    child->m_parent = parent;
+                                    m_children.insert(m_children.begin() + i, child);
+									++i;
+									get_document()->init_element(child);
+								}
+							}
+						}
+                    }
+					
+					break;
+                }
+                el->update_element_by_point(x, y, client_x, client_y, elem);
+            }
+        };
+
+		template<typename HtmlTag>
+		void insert_after_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
+		{
+			auto element = this->get_element_by_point(x, y, client_x, client_y);
+            for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+                element::ptr parent = el->parent();
+				if (el == element) {
+					++i;
+					litehtml::string_map attrs;
+					if (!elem.properties.empty()) {
+						for (auto prop : elem.properties) {
+							attrs[prop.name] = prop.value;
+                        }
+					}
+					int tagsize = elem.name.length();
+                    if (tagsize > 0) {
+                    	litehtml::tchar_t* tag = new char[tagsize];  
+						strcpy(tag, elem.name.c_str());
+						element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+						elem_ptr->m_parent = parent;
+						m_children.insert(m_children.begin() + i, elem_ptr);
+                        get_document()->init_element(elem_ptr);
                       
 						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
 						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
@@ -238,15 +300,16 @@ namespace litehtml
 								get_document()->init_element(child);
 							}
 						}
-                    } else {
+                    } else { 	// if new elem is empty tag - insert all child tags in place of current
 						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
 						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
 						    for (auto tags : elem.tags.tags()) {
 								auto children = litehtml::document::create_child(tags, get_document());
 								for (auto child : children) {
-                                    get_document()->init_element(child);
+                                    child->m_parent = parent;
                                     m_children.insert(m_children.begin() + i, child);
 									++i;
+                                    get_document()->init_element(child);
 								}
 							}
 						}
@@ -254,7 +317,7 @@ namespace litehtml
 					
 					break;
                 }
-                el->update_element_by_point(x, y, client_x, client_y, elem);
+                el->insert_after_element_by_point(x, y, client_x, client_y, elem);
             }
         };
 
