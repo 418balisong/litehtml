@@ -999,3 +999,48 @@ void litehtml::document::init_element(element::ptr element) {
     // Fanaly initialize elements
     element->init();
 }
+
+void litehtml::document::update_css(litehtml::document::ptr doc, context* ctxt) {
+  // Let's process created elements tree
+  if (doc->m_root) {
+    doc->container()->get_media_features(doc->m_media);
+
+    // apply master CSS
+    doc->m_root->apply_stylesheet(ctxt->master_css());
+
+    // parse elements attributes
+    doc->m_root->parse_attributes();
+
+    // parse style sheets linked in document
+    litehtml::media_query_list::ptr media;
+    for (const auto& css : doc->m_css) {
+      if (!css.media.empty()) {
+        media = litehtml::media_query_list::create_from_string(css.media, doc);
+      } else {
+        media = nullptr;
+      }
+      doc->m_styles.parse_stylesheet(css.text.c_str(), css.baseurl.c_str(), doc, media);
+    }
+    // Sort css selectors using CSS rules.
+    doc->m_styles.sort_selectors();
+
+    // get current media features
+    if (!doc->m_media_lists.empty()) {
+      doc->update_media_lists(doc->m_media);
+    }
+
+    // Apply parsed styles.
+    doc->m_root->apply_stylesheet(doc->m_styles);
+
+    // Parse applied styles in the elements
+    doc->m_root->parse_styles();
+
+    // Now the m_tabular_elements is filled with tabular elements.
+    // We have to check the tabular elements for missing table elements
+    // and create the anonymous boxes in visual table layout
+    doc->fix_tables_layout();
+
+    // Fanaly initialize elements
+    doc->m_root->init();
+  }
+}

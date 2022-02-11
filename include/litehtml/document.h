@@ -93,6 +93,7 @@ namespace litehtml
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = nullptr);
 
         void init_element(element::ptr element);
+        void update_css(litehtml::document::ptr doc, context* ctxt);
 
         template <typename HtmlTag>
         static litehtml::elements_vector create_child(HtmlTag htmltag, litehtml::document::ptr doc) {
