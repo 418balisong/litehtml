@@ -105,7 +105,7 @@ namespace litehtml
 
             if (!htmltag.properties.empty()) {
                 for (auto prop : htmltag.properties) {
-                    attrs[prop.name] = prop.value;
+                    attrs[prop.first] = prop.second;
                     }
             }
 
@@ -161,7 +161,7 @@ namespace litehtml
 
             if (!htmltag.properties.empty()) {
                 for (auto prop : htmltag.properties) {
-                    attrs[prop.name] = prop.value;
+                    attrs[prop.first] = prop.second;
                 }
             }
 

@@ -211,7 +211,7 @@ namespace litehtml
 					litehtml::string_map attrs;
 					if (!elem.properties.empty()) {
 						for (auto prop : elem.properties) {
-							attrs[prop.name] = prop.value;
+							attrs[prop.first] = prop.second;
                         }
 					}
 					int tagsize = elem.name.length();
