@@ -333,6 +333,23 @@ namespace litehtml
             }
         };
 
+		void get_element_id_by_point(int x, int y, int client_x, int client_y, std::vector<int> &path) {
+			auto element = this->get_element_by_point(x, y, client_x, client_y);
+			for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+                if (el == element) {
+					path.push_back(i);
+					return;
+                }
+                int size = path.size();
+                el->get_element_id_by_point(x, y, client_x, client_y, path);
+                if (path.size() > size) {
+					path.push_back(i);
+					return;
+                }
+            }
+		};
+
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
 	};
