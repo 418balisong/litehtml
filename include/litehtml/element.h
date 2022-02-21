@@ -350,6 +350,158 @@ namespace litehtml
             }
 		};
 
+		template<typename HtmlTag>
+		void update_element_by_id(std::vector<int> path, HtmlTag elem)
+		{
+            element::ptr el = nullptr;
+            int id;
+            while (!path.empty()) {
+	            id = path.back();
+				path.pop_back();
+				if (el == nullptr) {
+	                el = m_children[id];
+ 				} 
+				else {
+					el = el->m_children[id];
+				}
+            }
+            element::ptr parent = el->parent();
+            parent->m_children.erase(parent->m_children.begin() + id);
+
+			litehtml::string_map attrs;
+			if (!elem.properties.empty()) {
+				for (auto prop : elem.properties) {
+					attrs[prop.first] = prop.second;
+                }
+			}
+			
+			int tagsize = elem.name.length();
+            if (tagsize > 0) {
+               	litehtml::tchar_t* tag = new char[tagsize];  
+				strcpy(tag, elem.name.c_str());
+				element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+                elem_ptr->m_parent = parent;
+				parent->m_children.insert(parent->m_children.begin() + id, elem_ptr);
+				get_document()->init_element(elem_ptr);
+
+				mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+				if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+				    for (auto tags : elem.tags.tags()) {
+						auto children = litehtml::document::create_child(tags, get_document());
+						for (auto child : children) {
+							elem_ptr->appendChild(child);
+							get_document()->init_element(child);
+						}
+					}
+				} else if (var == mtest::structures::HtmlTextOrTags::Variants::text){
+					auto children = litehtml::document::create_child(elem, get_document());
+					for (auto child : children) {
+                        parent->appendChild(child);
+						get_document()->init_element(child);
+					}
+				}
+            } else { 	// if new elem is empty tag - insert all child tags in place of current
+				mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+				if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+				    for (auto tags : elem.tags.tags()) {
+						auto children = litehtml::document::create_child(tags, get_document());
+						for (auto child : children) {
+                            child->m_parent = parent;
+                            parent->m_children.insert(parent->m_children.begin() + id, child);
+                            ++id;
+							get_document()->init_element(child);
+						}
+					}
+				}
+            }
+            
+        };
+
+		template<typename HtmlTag>
+        void insert_after_element_by_id(std::vector<int> path, HtmlTag elem)
+		{
+			element::ptr el = nullptr;
+            int id;
+            while (!path.empty()) {
+	            id = path.back();
+				path.pop_back();
+				if (el == nullptr) {
+	                el = m_children[id];
+ 				} 
+				else {
+					el = el->m_children[id];
+				}
+            }
+            element::ptr parent = el->parent();
+            ++id;
+
+			litehtml::string_map attrs;
+			if (!elem.properties.empty()) {
+				for (auto prop : elem.properties) {
+					attrs[prop.first] = prop.second;
+                }
+			}
+			
+			int tagsize = elem.name.length();
+            if (tagsize > 0) {
+               	litehtml::tchar_t* tag = new char[tagsize];  
+				strcpy(tag, elem.name.c_str());
+				element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+                elem_ptr->m_parent = parent;
+				parent->m_children.insert(parent->m_children.begin() + id, elem_ptr);
+				get_document()->init_element(elem_ptr);
+
+				mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+				if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+				    for (auto tags : elem.tags.tags()) {
+						auto children = litehtml::document::create_child(tags, get_document());
+						for (auto child : children) {
+							elem_ptr->appendChild(child);
+							get_document()->init_element(child);
+						}
+					}
+				} else if (var == mtest::structures::HtmlTextOrTags::Variants::text){
+					auto children = litehtml::document::create_child(elem, get_document());
+					for (auto child : children) {
+                        parent->appendChild(child);
+						get_document()->init_element(child);
+					}
+				}
+            } else { 	// if new elem is empty tag - insert all child tags in place of current
+				mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
+				if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+				    for (auto tags : elem.tags.tags()) {
+						auto children = litehtml::document::create_child(tags, get_document());
+						for (auto child : children) {
+                            child->m_parent = parent;
+                            parent->m_children.insert(parent->m_children.begin() + id, child);
+                            ++id;
+							get_document()->init_element(child);
+						}
+					}
+				}
+            }
+        };
+
+		void remove_element_by_id(std::vector<int> path) {
+			element::ptr el = nullptr;
+            int id;
+            while (!path.empty()) {
+	            id = path.back();
+				path.pop_back();
+				if (el == nullptr) {
+	                el = m_children[id];
+ 				} 
+				else {
+					el = el->m_children[id];
+				}
+            }
+            element::ptr parent = el->parent();
+			
+			parent->m_children.erase(parent->m_children.begin() + id);
+        };
+
+
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
 	};
