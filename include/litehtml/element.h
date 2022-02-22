@@ -223,8 +223,8 @@ namespace litehtml
 						m_children.insert(m_children.begin() + i, elem_ptr);
                         get_document()->init_element(elem_ptr);
 
-						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
-						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						auto var = elem.tags.currentVariant();
+						if (var == 22) {
 						    for (auto tags : elem.tags.tags()) {
 								auto children = litehtml::document::create_child(tags, get_document());
 								for (auto child : children) {
@@ -232,7 +232,7 @@ namespace litehtml
 									get_document()->init_element(child);
 								}
 							}
-						} else if (var == mtest::structures::HtmlTextOrTags::Variants::text){
+						} else if (var == 21){
                             auto children = litehtml::document::create_child(elem, get_document());
 							for (auto child : children) {
                                 parent->appendChild(child);
@@ -240,8 +240,8 @@ namespace litehtml
 							}
 						}
                     } else { 	// if new elem is empty tag - insert all child tags in place of current
-						mtest::structures::HtmlTextOrTags::Variants var = elem.tags.currentVariant();
-						if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+						auto var = elem.tags.currentVariant();
+						if (var == 22) {
 						    for (auto tags : elem.tags.tags()) {
 								auto children = litehtml::document::create_child(tags, get_document());
 								for (auto child : children) {

@@ -111,17 +111,17 @@ namespace litehtml
 
             litehtml::elements_vector elements;
             litehtml::element::ptr ret;
-            mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
+            auto var = htmltag.tags.currentVariant();
 
             ret = doc->create_element(tag, attrs);
-            if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+            if (var == 22) {
                 for (auto tags : htmltag.tags.tags()) {
                     auto children = litehtml::document::create_child(tags, doc);
                     for (auto child : children) {
                         ret->appendChild(child);
                     }
                 }
-            } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
+            } else if (var == 21) {
                 std::string t = htmltag.tags.str();
                 int sizetext = t.length();
                 litehtml::tchar_t* text = new char[sizetext];
@@ -165,8 +165,8 @@ namespace litehtml
                 }
             }
 
-            mtest::structures::HtmlTextOrTags::Variants var = htmltag.tags.currentVariant();
-            if (var == mtest::structures::HtmlTextOrTags::Variants::taglists) {
+            auto var = htmltag.tags.currentVariant();
+            if (var == 22) {
                 litehtml::element::ptr ret;
 
                 ret = doc->create_element(tag, attrs);
@@ -180,7 +180,7 @@ namespace litehtml
                         ret->appendChild(child);
                     }
                 }
-            } else if (var == mtest::structures::HtmlTextOrTags::Variants::text) {
+            } else if (var == 21) {
                 std::string t = htmltag.tags.str();
                 int sizetext = t.length();
                 litehtml::tchar_t* text = new char[sizetext];
