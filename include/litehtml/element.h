@@ -199,8 +199,176 @@ namespace litehtml
 		virtual void				add_style(const litehtml::style& st);
 		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
 		
+		template <typename HtmlTag>
+        bool update_element_by_tagid(std::string tagid, HtmlTag elem, position &pos) {
+			for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+				element::ptr parent = el->parent();
+				auto id = el->get_attr("id", nullptr);
+				if (id != NULL) {
+					if (id == tagid) {
+						m_children.erase(m_children.begin() + i);
+						litehtml::string_map attrs;
+						if (!elem.properties.empty()) {
+							for (auto prop : elem.properties) {
+								attrs[prop.first] = prop.second;
+							}
+						}
+						int tagsize = elem.name.length();
+						if (tagsize > 0) {
+							litehtml::tchar_t* tag = new char[tagsize];
+							strcpy(tag, elem.name.c_str());
+							element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+							elem_ptr->m_parent = parent;
+							m_children.insert(m_children.begin() + i, elem_ptr);
+							get_document()->init_element(elem_ptr);
+
+							auto var = elem.tags.currentVariant();
+							if (var == 22) {
+								for (auto tags : elem.tags.tags()) {
+								auto children = litehtml::document::create_child(tags, get_document());
+									for (auto child : children) {
+										elem_ptr->appendChild(child);
+										get_document()->init_element(child);
+									}
+								}
+							} else if (var == 21) {
+								auto children = litehtml::document::create_child(elem, get_document());
+								for (auto child : children) {
+									parent->appendChild(child);
+									get_document()->init_element(child);
+								}
+							}
+						} else {  // if new elem is empty tag - insert all child tags in place of current
+							auto var = elem.tags.currentVariant();
+							if (var == 22) {
+								for (auto tags : elem.tags.tags()) {
+									auto children = litehtml::document::create_child(tags, get_document());
+									for (auto child : children) {
+										child->m_parent = parent;
+										m_children.insert(m_children.begin() + i, child);
+										++i;
+										get_document()->init_element(child);
+									}
+								}
+							}
+						}
+						pos = el->get_placement();
+						return true;
+					}
+                }
+				if (el->update_element_by_tagid(tagid, elem, pos))
+				{
+					return true;		// early exit 
+				} 
+			}
+			return false;
+        };
+
 		template<typename HtmlTag>
-		void update_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
+        bool insert_after_element_by_tagid(std::string tagid, HtmlTag elem)
+		{
+            for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+                element::ptr parent = el->parent();
+                auto id = el->get_attr("id", nullptr);
+				if (id != NULL) {
+					if (id == tagid) {
+						++i;
+						litehtml::string_map attrs;
+						if (!elem.properties.empty()) {
+							for (auto prop : elem.properties) {
+								attrs[prop.first] = prop.second;
+							}
+						}
+						int tagsize = elem.name.length();
+						if (tagsize > 0) {
+                    		litehtml::tchar_t* tag = new char[tagsize];  
+							strcpy(tag, elem.name.c_str());
+							element::ptr elem_ptr = get_document()->create_element(tag, attrs);
+							elem_ptr->m_parent = parent;
+							m_children.insert(m_children.begin() + i, elem_ptr);
+							get_document()->init_element(elem_ptr);
+                      
+							auto var = elem.tags.currentVariant();
+							if (var == 22) {
+								for (auto tags : elem.tags.tags()) {
+									auto children = litehtml::document::create_child(tags, get_document());
+									for (auto child : children) {
+										elem_ptr->appendChild(child);
+										get_document()->init_element(child);
+									}
+								}
+							} else if (var == 21){
+								auto children = litehtml::document::create_child(elem, get_document());
+								for (auto child : children) {
+								    parent->appendChild(child);
+									get_document()->init_element(child);
+								}
+							}
+						} else { 	// if new elem is empty tag - insert all child tags in place of current
+							auto var = elem.tags.currentVariant();
+							if (var == 22) {
+								for (auto tags : elem.tags.tags()) {
+									auto children = litehtml::document::create_child(tags, get_document());
+									for (auto child : children) {
+										child->m_parent = parent;
+										m_children.insert(m_children.begin() + i, child);
+										++i;
+										get_document()->init_element(child);
+									}
+								}
+							}
+						}
+						return true;
+					}
+				}
+                if(el->insert_after_element_by_tagid(tagid, elem))
+				{
+					return true;
+				}
+            }
+            return false;
+        };
+
+		bool remove_element_by_tagid(std::string tagid, int count) {
+			for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+				auto id = el->get_attr("id", nullptr);
+				if (id != NULL) {
+					if (id == tagid) {
+						m_children.erase(m_children.begin() + i, m_children.begin() + i + count);
+						return true;
+					}
+				}
+                if (el->remove_element_by_tagid(tagid, count))
+				{
+					return true;
+				}
+            }
+			return false;
+        };
+		
+		element::ptr get_element_by_tagid(std::string tagid) {
+			for (auto i = 0; i < m_children.size(); i++) {
+				element::ptr el = m_children[i];
+				const litehtml::tchar_t* id = el->get_attr("id", nullptr);
+                if (id != NULL)
+				{
+					if (id == tagid) {
+						return el;
+					}
+				}
+                element::ptr child = el->get_element_by_tagid(tagid);
+				if (child != nullptr) {
+                   return child;
+				}
+            }
+			return nullptr;
+		};
+
+		template<typename HtmlTag>
+		bool update_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem, position &pos)
 		{
 			auto element = this->get_element_by_point(x, y, client_x, client_y);
             for (auto i = 0; i < m_children.size(); i++) {
@@ -253,15 +421,18 @@ namespace litehtml
 							}
 						}
                     }
-					
-					break;
+                    pos = el->get_placement();
+                    return true;
                 }
-                el->update_element_by_point(x, y, client_x, client_y, elem);
+                if (el->update_element_by_point(x, y, client_x, client_y, elem, pos)) {
+					return true;  // early exit
+                }
             }
+            return false;
         };
 
 		template<typename HtmlTag>
-		void insert_after_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
+		bool insert_after_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem)
 		{
 			auto element = this->get_element_by_point(x, y, client_x, client_y);
             for (auto i = 0; i < m_children.size(); i++) {
@@ -314,26 +485,33 @@ namespace litehtml
 							}
 						}
                     }
-					
-					break;
+					return true;
                 }
-                el->insert_after_element_by_point(x, y, client_x, client_y, elem);
+                if(el->insert_after_element_by_point(x, y, client_x, client_y, elem))
+				{
+					return true;
+				}
             }
+            return false;
         };
 
-		void remove_element_by_point(int x, int y, int client_x, int client_y) {
+		bool remove_element_by_point(int x, int y, int client_x, int client_y) {
 			auto element = this->get_element_by_point(x, y, client_x, client_y);
 			for (auto i = 0; i < m_children.size(); i++) {
 				element::ptr el = m_children[i];
                 if (el == element) {
 					m_children.erase(m_children.begin() + i);
-					break;
+                    return true;
                 }
-                el->remove_element_by_point(x, y, client_x, client_y);
+                if (el->remove_element_by_point(x, y, client_x, client_y))
+				{
+					return true;
+				}
             }
+			return false;
         };
 
-		void get_element_id_by_point(int x, int y, int client_x, int client_y, std::vector<int> &path) {
+		void get_element_path_by_point(int x, int y, int client_x, int client_y, std::vector<int> &path) {
 			auto element = this->get_element_by_point(x, y, client_x, client_y);
 			for (auto i = 0; i < m_children.size(); i++) {
 				element::ptr el = m_children[i];
@@ -342,7 +520,7 @@ namespace litehtml
 					return;
                 }
                 int size = path.size();
-                el->get_element_id_by_point(x, y, client_x, client_y, path);
+                el->get_element_path_by_point(x, y, client_x, client_y, path);
                 if (path.size() > size) {
 					path.push_back(i);
 					return;
@@ -351,7 +529,7 @@ namespace litehtml
 		};
 
 		template<typename HtmlTag>
-		void update_element_by_id(std::vector<int> path, HtmlTag elem)
+		void update_element_by_path(std::vector<int> path, HtmlTag elem, position &pos)
 		{
             element::ptr el = nullptr;
             int id;
@@ -414,11 +592,11 @@ namespace litehtml
 					}
 				}
             }
-            
+            pos = el->get_placement();
         };
 
 		template<typename HtmlTag>
-        void insert_after_element_by_id(std::vector<int> path, HtmlTag elem)
+        void insert_after_element_by_path(std::vector<int> path, HtmlTag elem)
 		{
 			element::ptr el = nullptr;
             int id;
@@ -483,7 +661,7 @@ namespace litehtml
             }
         };
 
-		void remove_element_by_id(std::vector<int> path) {
+		void remove_element_by_path(std::vector<int> path) {
 			element::ptr el = nullptr;
             int id;
             while (!path.empty()) {
