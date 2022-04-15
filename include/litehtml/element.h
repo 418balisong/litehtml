@@ -331,22 +331,17 @@ namespace litehtml
             return false;
         };
 
-		bool remove_element_by_tagid(std::string tagid, int count) {
+		void remove_element_by_tagid(std::string tagid) {
 			for (auto i = 0; i < m_children.size(); i++) {
 				element::ptr el = m_children[i];
 				auto id = el->get_attr("id", nullptr);
-				if (id != NULL) {
+				if (id) {
 					if (id == tagid) {
-						m_children.erase(m_children.begin() + i, m_children.begin() + i + count);
-						return true;
+						m_children.erase(m_children.begin() + i);
 					}
 				}
-                if (el->remove_element_by_tagid(tagid, count))
-				{
-					return true;
-				}
+                el->remove_element_by_tagid(tagid);
             }
-			return false;
         };
 		
 		element::ptr get_element_by_tagid(std::string tagid) {
@@ -366,6 +361,8 @@ namespace litehtml
             }
 			return nullptr;
 		};
+                
+        void drop_radio_by_name(std::string name);
 
 		template<typename HtmlTag>
 		bool update_element_by_point(int x, int y, int client_x, int client_y, HtmlTag elem, position &pos)

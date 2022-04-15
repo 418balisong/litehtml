@@ -305,6 +305,48 @@ void litehtml::element::apply_relative_shift(int parent_width)
 	}
 }
 
+void litehtml::element::drop_radio_by_name(std::string name) {
+	for (auto i = 0; i < m_children.size(); i++) {
+		element::ptr el = m_children[i];
+		element::ptr parent = el->parent();
+        auto tagName = el->get_tagName();
+		if (tagName != NULL)
+		{
+			if (strcmp(tagName, "input") == 0)
+			{
+				auto type = el->get_attr("type", nullptr);
+				if(strcmp(type, "radio") == 0)	
+				{
+					auto radio_name = el->get_attr("name", nullptr);
+					if (radio_name == name)
+					{
+						litehtml::string_map attrs;
+						attrs["name"] = radio_name;
+						attrs["type"] = type;
+						attrs["checked"] = "false";
+						auto value = el->get_attr("value", nullptr);
+						if (value) {
+							attrs["value"] = value;
+						}
+						auto id = el->get_attr("id", nullptr);
+						if (id) {
+							attrs["id"] = id;
+							}
+						document::ptr doc = get_document();
+						element::ptr elem_ptr = doc->create_element(tagName, attrs);
+						elem_ptr->m_parent = parent;
+						m_children.erase(m_children.begin() + i);
+						m_children.insert(m_children.begin() + i, elem_ptr);
+                        doc->init_element(elem_ptr);
+					}
+				}
+			}
+		}
+				
+		el->drop_radio_by_name(name);				 
+	}
+};
+
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
 litehtml::element::ptr litehtml::element::get_element_by_point(int x, int y, int client_x, int client_y)	LITEHTML_RETURN_FUNC(nullptr)
